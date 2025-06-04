@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiDownload - Téléchargeur de Vidéos</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="logo">
+                            <i data-feather="download"></i>
+                            MultiDownload
+                        </h1>
+                        <p class="tagline">Téléchargez des vidéos depuis YouTube, Facebook, Twitter et bien plus !</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-outline-primary" id="supportedSitesBtn">
+                            <i data-feather="info"></i>
+                            Sites Supportés
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- URL Input Section -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-xl-6">
+                        <div class="download-card">
+                            <div class="card-header">
+                                <h2><i data-feather="link"></i> Coller l'URL de la Vidéo</h2>
+                                <p>Collez l'URL de la vidéo que vous souhaitez télécharger</p>
+                            </div>
+                            
+                            <div class="card-body">
+                                <form id="urlForm">
+                                    <div class="url-input-group">
+                                        <input 
+                                            type="url" 
+                                            id="videoUrl" 
+                                            class="form-control url-input" 
+                                            placeholder="https://www.youtube.com/watch?v=..."
+                                            required
+                                        >
+                                        <button type="submit" class="btn btn-primary btn-get-info">
+                                            <i data-feather="search"></i>
+                                            Obtenir les Infos
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <!-- Error Messages -->
+                                <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                                    <i data-feather="alert-circle"></i>
+                                    <span></span>
+                                </div>
+                                
+                                <!-- Loading State -->
+                                <div id="loadingState" class="loading-state d-none">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Chargement...</span>
+                                    </div>
+                                    <p>Analyse de la vidéo en cours...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Info Section -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 col-xl-8">
+                        <div id="videoInfoSection" class="video-info-section d-none">
+                            <div class="video-info-card">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="video-thumbnail">
+                                            <img id="videoThumbnail" src="" alt="Miniature de la Vidéo" class="img-fluid">
+                                            <div class="platform-badge" id="platformBadge"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="video-details">
+                                            <h3 id="videoTitle"></h3>
+                                            <div class="video-meta">
+                                                <span class="meta-item">
+                                                    <i data-feather="user"></i>
+                                                    <span id="videoUploader"></span>
+                                                </span>
+                                                <span class="meta-item">
+                                                    <i data-feather="clock"></i>
+                                                    <span id="videoDuration"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Download Options -->
+                            <div class="download-options">
+                                <h4><i data-feather="download"></i> Choisir le Format de Téléchargement</h4>
+                                
+                                <div class="format-tabs">
+                                    <ul class="nav nav-pills" id="formatTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="video-tab" data-bs-toggle="pill" data-bs-target="#video-pane" type="button" role="tab">
+                                                <i data-feather="video"></i>
+                                                Vidéo
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="audio-tab" data-bs-toggle="pill" data-bs-target="#audio-pane" type="button" role="tab">
+                                                <i data-feather="music"></i>
+                                                Audio Seulement
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="tab-content" id="formatTabContent">
+                                    <!-- Video Formats -->
+                                    <div class="tab-pane fade show active" id="video-pane" role="tabpanel">
+                                        <div id="videoFormats" class="format-list">
+                                            <!-- Video formats will be populated here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Audio Format -->
+                                    <div class="tab-pane fade" id="audio-pane" role="tabpanel">
+                                        <div class="format-list">
+                                            <div class="format-option">
+                                                <div class="format-info">
+                                                    <span class="format-title">Audio MP3</span>
+                                                    <span class="format-quality">192 kbps</span>
+                                                </div>
+                                                <button class="btn btn-success download-btn" data-quality="audio">
+                                                    <i data-feather="download"></i>
+                                                    Télécharger MP3
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Progress Section -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 col-xl-6">
+                        <div id="downloadProgress" class="download-progress d-none">
+                            <div class="progress-card">
+                                <h4><i data-feather="download-cloud"></i> Téléchargement en cours...</h4>
+                                <div class="progress-bar-container">
+                                    <div class="progress">
+                                        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="progress-stats">
+                                        <span id="progressPercent">0%</span>
+                                        <span id="progressSpeed"></span>
+                                        <span id="progressETA"></span>
+                                    </div>
+                                </div>
+                                <div id="progressStatus" class="progress-status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Supported Sites Modal -->
+        <div class="modal fade" id="supportedSitesModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i data-feather="globe"></i>
+                            Plateformes Supportées
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Ce téléchargeur supporte des centaines de plateformes incluant :</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="supported-sites-list">
+                                    <li><i data-feather="play"></i> YouTube</li>
+                                    <li><i data-feather="facebook"></i> Facebook</li>
+                                    <li><i data-feather="twitter"></i> Twitter</li>
+                                    <li><i data-feather="instagram"></i> Instagram</li>
+                                    <li><i data-feather="music"></i> TikTok</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="supported-sites-list">
+                                    <li><i data-feather="video"></i> Vimeo</li>
+                                    <li><i data-feather="twitch"></i> Twitch</li>
+                                    <li><i data-feather="eye"></i> Dailymotion</li>
+                                    <li><i data-feather="bookmark"></i> Pinterest</li>
+                                    <li><i data-feather="message-circle"></i> Reddit</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i data-feather="info"></i>
+                            Et bien d'autres ! Collez simplement n'importe quelle URL de vidéo pour vérifier si elle est supportée.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attribution Section -->
+        <div class="attribution-section">
+            <div class="container">
+                <div class="attribution-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5><i data-feather="user"></i> Propriétaire du Site</h5>
+                            <p class="mb-0">
+                                Ce site web appartient à <strong>Hazard_E'isk</strong><br>
+                                <small class="text-muted">
+                                    Développé par Claude (Anthropic) - Assistant IA avancé
+                                </small>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="owner-badge">
+                                <i data-feather="check-circle"></i>
+                                <span>Site Certifié</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p>&copy; 2024 MultiDownload - Hazard_E'isk. Téléchargez des vidéos de manière responsable et respectez les lois sur le droit d'auteur.</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="social-links">
+                            <a href="#" class="social-link">
+                                <i data-feather="github"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i data-feather="twitter"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>
